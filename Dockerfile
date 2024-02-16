@@ -12,6 +12,8 @@ RUN apt-get update \
         curl \
         dirmngr \
         git \
+        htop \
+        libgl1 \
         lsb-release \
         software-properties-common \
         unzip \
@@ -26,9 +28,8 @@ RUN apt-get update \
         python${PYTHON_VERSION}-distutils \
     && wget https://bootstrap.pypa.io/get-pip.py \
     && python${PYTHON_VERSION} get-pip.py \
-    && rm -f get-pip.py \
     && update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1 \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf get-pip.py /root/.cache /var/lib/apt/lists/* \
     && apt-get clean 
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" \
@@ -45,5 +46,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir --upgrade -r requirements.txt
 
 WORKDIR /workspace
+
+RUN ln -s /workspace/.cache /root/.cache
 
 CMD ["tail", "-f", "/dev/null"]

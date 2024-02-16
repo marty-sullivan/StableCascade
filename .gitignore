@@ -1,3 +1,4 @@
+.cache/*
 *.out
 dist_file_*
 __pycache__/*
