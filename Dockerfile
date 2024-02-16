@@ -1,27 +1,33 @@
-FROM public.ecr.aws/docker/library/python:3.11-slim-bookworm as base
+FROM nvidia/cuda:12.3.1-runtime-ubuntu22.04 as base
 
-WORKDIR /code
+# Install Python, etc.
 
-RUN apt-get update \
-    && apt-get install -y \
-        git \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean 
-
-COPY ./requirements.txt ./requirements.txt
-
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir --upgrade -r requirements.txt
-
-FROM base as devcontainer
+ARG PYTHON_VERSION="3.11"
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update \
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
         curl \
+        dirmngr \
         git \
+        lsb-release \
+        software-properties-common \
         unzip \
         vim \
         wget \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python${PYTHON_VERSION} \
+        python${PYTHON_VERSION}-dev \
+        python${PYTHON_VERSION}-venv \
+        python${PYTHON_VERSION}-distutils \
+    && wget https://bootstrap.pypa.io/get-pip.py \
+    && python${PYTHON_VERSION} get-pip.py \
+    && rm -f get-pip.py \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean 
 
@@ -30,6 +36,13 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "aws
     && ./aws/install --update \
     && echo 'complete -C '/usr/local/bin/aws_completer' aws' >> ~/.bashrc \
     && rm -rf awscliv2.zip ./aws
+
+WORKDIR /code
+
+COPY ./requirements.txt ./requirements.txt
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir --upgrade -r requirements.txt
 
 WORKDIR /workspace
 
